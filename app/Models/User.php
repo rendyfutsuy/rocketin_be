@@ -12,6 +12,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class User extends Authenticatable implements JWTSubject
 {
     use HasFactory, Notifiable, SoftDeletes;
+    /** Level */
+
+    Const GUEST = 0;
+    Const REGISTERED = 1;
+    Const ADMIN = 2;
+    Const EDITOR = 3;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +27,8 @@ class User extends Authenticatable implements JWTSubject
     protected $fillable = [
         'name',
         'username',
+        'level',
+        'is_admin',
         'email',
         'password',
     ];
