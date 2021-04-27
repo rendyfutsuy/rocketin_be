@@ -11,21 +11,22 @@ use App\Http\Resources\VideoCollection;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\Video as VideoResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Modules\Video\Http\Searches\VideoSearch;
 
 class VideoController extends Controller
 {
+    /** @var VideoSearch */
+    protected $search;
+
+    public function __construct(VideoSearch $search)
+    {
+        $this->search = $search;
+    }
+
     public function save(Request $request): JsonResponse
     {
         return DB::transaction(function () use ($request) {
-            $url = null;
-
-            if ($request->file) {
-                $prefix = 'videos/'. auth()->user()->id .'/';
-
-                $file = $request->file;
-
-                $url = Storage::put('public/'.$prefix, $file) ?? ' ';
-            }
+            $url = $this->uploadVideo(($request->file));
 
             $video = Video::create(array_merge([
                 'watch_url' => $url,
@@ -47,13 +48,10 @@ class VideoController extends Controller
         return DB::transaction(function () use ($request, $video) {
             $previous = clone $video;
             $url = $previous->watch_url;
+            $newUrl = $this->uploadVideo(($request->file));
 
-            if ($request->file) {
-                $prefix = 'videos/'. auth()->user()->id .'/';
-                
-                $file = $request->file;
-
-                $url = Storage::put('public/'.$prefix, $file) ?? ' ';
+            if ($newUrl) {
+                $url = $newUrl;
             }
 
             $video->update(array_merge([
@@ -101,11 +99,21 @@ class VideoController extends Controller
 
     public function list(Request $request): ResourceCollection
     {
-        $videos = Video::query()
+        $videos = $this->search->apply()
             ->orderBy('id', $request->get('order_by', 'DESC'))
             ->paginate($request->per_page ?? 5);
-
-
+            
         return new VideoCollection($videos);
+    }
+
+    protected function uploadVideo($file)
+    {
+        if ($file) {
+            $prefix = 'videos/'. auth()->user()->id .'';
+
+            return Storage::put('public/'.$prefix, $file) ?? ' ';
+        }
+
+        return null;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class Video extends JsonResource
@@ -14,6 +15,17 @@ class Video extends JsonResource
      */
     public function toArray($request)
     {
-        return parent::toArray($request);
+        return [
+            'title' => $this->title,
+            'description' => $this->description,
+            'duration' => $this->duration . 'Menit',
+            'artist' => $this->artists()->pluck('name'),
+            'genre' => $this->genres()->pluck('name'),
+            'watch_url' => Storage::url($this->watch_url),
+            'user_id' => $this->user->username,
+            'views' => $this->views,
+            'vote' => $this->vote,
+            'like' => $this->like,
+        ];
     }
 }
