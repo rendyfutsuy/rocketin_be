@@ -23,9 +23,9 @@ class Video extends JsonResource
             'genre' => $this->genres()->pluck('name'),
             'watch_url' => Storage::url($this->watch_url),
             'user_id' => $this->user->username,
-            'views' => $this->views,
-            'vote' => $this->vote,
-            'like' => $this->like,
+            'views' => (int) $this->views,
+            'vote' => (int) $this->vote,
+            'like' => (int) $this->like,
         ];
     }
 }
