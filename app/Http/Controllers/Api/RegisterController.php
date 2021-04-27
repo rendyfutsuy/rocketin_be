@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\User;
 use Illuminate\Http\Request;
-use Modules\Auth\Models\User;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Events\Registered;
@@ -24,44 +24,12 @@ class RegisterController extends CustomRegistration
     {
         return DB::transaction(function () use ($request) {
             $this->validator($request->all())->validate();
-
-            if (! $this->haveOtpConfirmation($request)) {
-                return $this->responseMessage(
-                    self::FAIL,
-                    $this->translate('auth::registration.does_not_have_otp_mean', $this->getLocale($request)),
-                    202
-                );
-            }
-            
-            if ($request->email && User::where('email', $request->email)->exists()) {
-                $user = User::where('email', $request->email)->first();
-                
-                $this->sendActivationEmail($user);
-    
-                return $this->responseMessage(
-                    self::REGISTERED,
-                    $this->translate('auth::registration.already_registered', $this->getLocale($request)),
-                    202
-                );
-            }
-
-            if ($request->phone && User::where('phone', $request->phone)->exists()) {
-                $user = User::where('phone', $request->phone)->first();
-                
-                $this->sendActivationMessage($user);
-
-                return $this->responseMessage(
-                    self::REGISTERED,
-                    $this->translate('auth::registration.phone_already_registered', $this->getLocale($request)),
-                    202
-                );
-            }
     
             $user = $this->create($request->all());
     
-            event(new Registered($user));
+            // event(new Registered($user));
         
-            $this->sendOtpCode($user);
+            // $this->sendOtpCode($user);
     
             return $this->responseMessage(
                 self::SUCCESS,
@@ -79,8 +47,7 @@ class RegisterController extends CustomRegistration
                 'string',
                 'max:128',
                 Rule::unique('users')->where(function ($query) {
-                    return $query->where('level', User::REGISTERED)
-                            ->whereNull('activation_code');
+                    return $query->where('level', User::REGISTERED);
                 }),
             ],
             'email' => [
@@ -90,8 +57,7 @@ class RegisterController extends CustomRegistration
                  'email',
                  'max:255',
                  Rule::unique('users')->where(function ($query) {
-                    return $query->where('level', User::REGISTERED)
-                            ->whereNull('activation_code');
+                    return $query->where('level', User::REGISTERED);
                 }),
             ],
             'phone' => [
@@ -99,8 +65,7 @@ class RegisterController extends CustomRegistration
                 'string',
                 'max:13',
                 Rule::unique('users')->where(function ($query) {
-                    return $query->where('level', User::REGISTERED)
-                            ->whereNull('activation_code');
+                    return $query->where('level', User::REGISTERED);
                 }),
             ],
             'password' => ['required', 'string', 'min:6'],

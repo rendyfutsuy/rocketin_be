@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\CustomAuth;
 
+use App\Models\User;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
-use Modules\Auth\Models\User;
 use Illuminate\Validation\Rule;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Controllers\Controller;
@@ -76,7 +76,7 @@ abstract class CustomRegistration extends Controller
 
         $this->attemptMail('register_email_counter_'. $user->email, self::REGISTER_EMAIL_LIMIT);
 
-        Mail::to($user->email)->send(new UserActivationEmail($user));
+        // Mail::to($user->email)->send(new UserActivationEmail($user));
     }
 
     protected function sendActivationMessage(User $user): void
@@ -132,13 +132,6 @@ abstract class CustomRegistration extends Controller
             'phone' => Arr::get($data, 'phone') ?? null,
             'password' => Hash::make($data['password']),
             'level' => User::REGISTERED,
-            'activation_code' => $this->generateActivationCode(Config::get('auth.code_generate.length', 0)),
-            'banned_at' => null,
-            'meta' => [
-                'wp_username' => get_next_wp_username($data['username']) . '-username',
-                'wp_nickname' => get_next_wp_username($data['username']) . '-nickname',
-                'wp_password' => $data['username'] . '-password',
-            ],
             'email_verified_at' => null,
         ];
     }

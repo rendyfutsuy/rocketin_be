@@ -31,6 +31,7 @@ class User extends Authenticatable implements JWTSubject
         'is_admin',
         'email',
         'password',
+        'phone',
     ];
 
     /**
@@ -51,4 +52,24 @@ class User extends Authenticatable implements JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * Get JWT indentifier.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Get JWT custom claims.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims()
+    {
+        return [];
+    }
 }

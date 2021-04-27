@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\CustomAuth;
 
+use App\Models\User;
 use Illuminate\Http\Request;
-use Modules\Auth\Models\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;

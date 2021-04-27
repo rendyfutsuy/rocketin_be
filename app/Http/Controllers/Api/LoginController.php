@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
-use Modules\Auth\Models\User;
+use App\Models\User;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Config;
 use App\Http\Controllers\CustomAuth\CustomLogin;
@@ -25,14 +25,6 @@ class LoginController extends CustomLogin
 
         if (! $user) {
             return $this->sendFailResponse();
-        }
-
-        if (! $user->isActivated()) {
-            return $this->responseMessage(
-                self::FAIL,
-                $this->translate('auth::activation.account_has_not_been_activated', $this->getLocale($request)),
-                422
-            );
         }
 
         $credentials = $this->credentials($request);
