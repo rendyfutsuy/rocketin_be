@@ -5,8 +5,10 @@ namespace Modules\Video\Http\Controllers;
 use Illuminate\Http\Request;
 use Modules\Video\Models\Video;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\VideoCollection;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\Video as VideoResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -17,16 +19,17 @@ class VideoController extends Controller
         return DB::transaction(function () use ($request) {
             $url = null;
 
-            if ($this->request->file) {
+            if ($request->file) {
                 $prefix = 'videos/'. auth()->user()->id .'/';
 
-                $file = $this->request->file;
+                $file = $request->file;
 
                 $url = Storage::put('public/'.$prefix, $file) ?? ' ';
             }
 
-            $video = Post::create(array_merge([
+            $video = Video::create(array_merge([
                 'watch_url' => $url,
+                'user_id' => auth()->user()->id,
             ], $request->all()));
             
             // event('video_created', new VideoCreated($video, $request));
@@ -45,16 +48,17 @@ class VideoController extends Controller
             $previous = clone $video;
             $url = $previous->watch_url;
 
-            if ($this->request->file) {
+            if ($request->file) {
                 $prefix = 'videos/'. auth()->user()->id .'/';
                 
-                $file = $this->request->file;
+                $file = $request->file;
 
                 $url = Storage::put('public/'.$prefix, $file) ?? ' ';
             }
 
             $video->update(array_merge([
                 'watch_url' => $url,
+                'user_id' => auth()->user()->id,
             ], $request->all()));
 
             // event('video_updated', new VideoUpdated($previous, $video->refresh(), $request));
@@ -91,16 +95,6 @@ class VideoController extends Controller
     public function detail(Video $video): JsonResponse
     {
         return DB::transaction(function () use ($video) {
-            if (! $this->post->isOwner($video)) {
-                return response()->json([
-                    'message' => __('video::crud.can_not_delete_post', [], auth()->user()->getLocale()),
-                ], 403);
-            }
-
-            $response = $this->post->delete($video);
-
-            // event('video_deleted', new VideoDeleted($video));
-
             return new VideoResource($video);
         });
     }
