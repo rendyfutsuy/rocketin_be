@@ -6,6 +6,7 @@ use Modules\Auth\Models\User;
 use Modules\Video\Models\Genre;
 use Modules\Video\Models\Artist;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -27,7 +28,7 @@ class Video extends Model
         'duration',
         'artist',
         'genre',
-        'watchUrl',
+        'watch_url',
         'user_id',
         'views',
         'vote',

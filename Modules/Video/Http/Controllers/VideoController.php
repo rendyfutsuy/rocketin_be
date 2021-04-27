@@ -1,225 +1,117 @@
 <?php
 
-namespace Modules\Post\Http\Controllers;
+namespace Modules\Video\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Modules\Post\Models\Post;
+use Modules\Video\Models\Video;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Modules\Post\Events\PostWaited;
 use App\Http\Controllers\Controller;
-use Modules\Post\Events\PostCreated;
-use Modules\Post\Events\PostDeleted;
-use Modules\Post\Events\PostUpdated;
-use Modules\Post\Events\PostRejected;
-use Modules\Post\Events\PostPublished;
-use Modules\Post\Http\Requests\PostEdit;
-use Modules\Post\Http\Requests\PostWait;
-use Modules\Post\Http\Searches\PostSearch;
-use Modules\Post\Http\Requests\PostCreation;
-use Modules\Wordpress\ServiceManager\Wordpress;
-use Illuminate\Http\Resources\Json\JsonResource;
-use Modules\Post\Http\Resources\PostResourceDetail;
-use Modules\Post\ServiceManager\Post as PostManager;
+use App\Http\Resources\VideoCollection;
+use App\Http\Resources\Video as VideoResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Modules\Post\Http\Resources\PostResourceCollection;
 
 class VideoController extends Controller
 {
-    /** @var Wordpress */
-    protected $wordpress;
-
-    /** @var PostsSearch */
-    protected $search;
-    
-    /** @var PostManager */
-    protected $post;
-
-    public function __construct(Wordpress $wordpress, PostSearch $search, PostManager $post)
-    {
-        $this->wordpress = $wordpress;
-        $this->search= $search;
-        $this->post = $post;
-    }
-    
-    public function save(PostCreation $request): JsonResponse
+    public function save(Request $request): JsonResponse
     {
         return DB::transaction(function () use ($request) {
-            $post = Post::create($request->formInput());
+            $url = null;
+
+            if ($this->request->file) {
+                $prefix = 'videos/'. auth()->user()->id .'/';
+
+                $file = $this->request->file;
+
+                $url = Storage::put('public/'.$prefix, $file) ?? ' ';
+            }
+
+            $video = Post::create(array_merge([
+                'watch_url' => $url,
+            ], $request->all()));
             
-            event('post_created', new PostCreated($post, $request));
+            // event('video_created', new VideoCreated($video, $request));
 
             return response()->json([
-                'message' => __('post::crud.saved', [
-                    'title' => $post->title,
+                'message' => __('video::crud.saved', [
+                    'title' => $video->title,
                 ], auth()->user()->getLocale()),
             ]);
         });
     }
 
-    public function update(Post $post, PostEdit $request): JsonResponse
+    public function update(Video $video, Request $request): JsonResponse
     {
-        return DB::transaction(function () use ($request, $post) {
-            if (! $this->post->isOwner($post)) {
+        return DB::transaction(function () use ($request, $video) {
+            $previous = clone $video;
+            $url = $previous->watch_url;
+
+            if ($this->request->file) {
+                $prefix = 'videos/'. auth()->user()->id .'/';
+                
+                $file = $this->request->file;
+
+                $url = Storage::put('public/'.$prefix, $file) ?? ' ';
+            }
+
+            $video->update(array_merge([
+                'watch_url' => $url,
+            ], $request->all()));
+
+            // event('video_updated', new VideoUpdated($previous, $video->refresh(), $request));
+
+            return response()->json([
+                'message' => __('video::crud.updated', [
+                    'title' => $video->title,
+                ], auth()->user()->getLocale()),
+            ]);
+        });
+    }
+
+    public function delete(Video $video): JsonResponse
+    {
+        return DB::transaction(function () use ($video) {
+            if (! $this->post->isOwner($video)) {
                 return response()->json([
-                    'message' => __('post::crud.can_not_update_post', [], auth()->user()->getLocale()),
+                    'message' => __('video::crud.can_not_delete_post', [], auth()->user()->getLocale()),
                 ], 403);
             }
 
-            $previous = clone $post;
+            $response = $this->post->delete($video);
 
-            $post->update($request->formInput());
-
-            event('post_updated', new PostUpdated($previous, $post->refresh(), $request));
+            // event('video_deleted', new VideoDeleted($video));
 
             return response()->json([
-                'message' => __('post::crud.updated', [
-                    'title' => $post->title,
+                'message' => __('video::crud.deleted', [
+                    'title' => $video->title,
                 ], auth()->user()->getLocale()),
             ]);
         });
     }
 
-    public function delete(Post $post): JsonResponse
+    public function detail(Video $video): JsonResponse
     {
-        return DB::transaction(function () use ($post) {
-            if (! $this->post->isOwner($post)) {
+        return DB::transaction(function () use ($video) {
+            if (! $this->post->isOwner($video)) {
                 return response()->json([
-                    'message' => __('post::crud.can_not_delete_post', [], auth()->user()->getLocale()),
+                    'message' => __('video::crud.can_not_delete_post', [], auth()->user()->getLocale()),
                 ], 403);
             }
 
-            $response = $this->post->delete($post);
+            $response = $this->post->delete($video);
 
-            event('post_deleted', new PostDeleted($post));
+            // event('video_deleted', new VideoDeleted($video));
 
-            return response()->json([
-                'message' => __('post::crud.deleted', [
-                    'title' => $post->title,
-                ], auth()->user()->getLocale()),
-            ]);
-        });
-    }
-
-    public function toRejectedList(Post $post, Request $request): JsonResponse
-    {
-        return DB::transaction(function () use ($post, $request) {
-
-            if ($post->status == Post::REJECTED) {
-                return response()->json([
-                    'message' => __('post::crud.already_rejected', [
-                        'title' => $post->title,
-                    ], auth()->user()->getLocale()),
-                ]);
-            }
-            
-            $post->status = Post::REJECTED;
-
-            if ($request->note) {
-                $post->meta = array_merge($post->meta ?? [], [
-                    'rejected_note' => $request->note,
-                ]);
-            }
-            
-            $post->save();
-
-            event('post_rejected', new PostRejected($post, $request));
-
-            return response()->json([
-                'message' => __('post::crud.rejected', [
-                    'title' => $post->title,
-                ], auth()->user()->getLocale()),
-            ]);
-        });
-    }
-
-    public function toWaitList(Post $post, PostWait $request): JsonResponse
-    {
-        return DB::transaction(function () use ($post, $request) {
-            if (!empty($request->all())) {
-                $post->update($request->formInput());
-            }
-
-            if (! $this->post->rejectedToWaitList($post)) {
-                return $this->post->failToPublishText($post);
-            }
-
-            if ($post->status == Post::WAITED) {
-                return response()->json([
-                    'message' => __('post::crud.already_waited', [
-                        'title' => $post->title,
-                    ], auth()->user()->getLocale()),
-                ]);
-            }
-            
-            $post->status = Post::WAITED;
-            $post->save();
-
-            event('post_waited', new PostWaited($post));
-
-            return response()->json([
-                'message' => __('post::crud.waited', [
-                    'title' => $post->title,
-                ], auth()->user()->getLocale()),
-            ]);
-        });
-    }
-
-
-    public function publish(Post $post): JsonResponse
-    {
-        return DB::transaction(function () use ($post) {
-            if (! $this->post->readyToPublish($post)) {
-                return $this->post->failToPublishText($post);
-            }
-
-            $response = $this->post->publish($post);
-            
-            $post->wp_post_id = $response->id;
-            $post->status = Post::PUBLISHED;
-            $post->save();
-
-            event('post_published', new PostPublished($post));
-
-            return response()->json([
-                'message' => __('post::crud.published', [
-                    'title' => $post->title,
-                ], auth()->user()->getLocale()),
-            ]);
+            return new VideoResource($video);
         });
     }
 
     public function list(Request $request): ResourceCollection
     {
-        $posts = $this->search->apply()->orderBy('id', $request->get('order_by', 'DESC'))->paginate($request->per_page ?? 5);
-
-        return new PostResourceCollection($posts);
-    }
-
-    public function detail(Post $post): JsonResource
-    {
-        return new PostResourceDetail($post);
-    }
-
-    public function waitList(Request $request): ResourceCollection
-    {
-        $posts = $this->search->apply()
-            ->where('status', Post::WAITED)
+        $videos = Video::query()
             ->orderBy('id', $request->get('order_by', 'DESC'))
             ->paginate($request->per_page ?? 5);
 
 
-        return new PostResourceCollection($posts);
-    }
-
-    public function rejectedList(Request $request): ResourceCollection
-    {
-        $posts = $this->search->apply()
-            ->where('status', Post::REJECTED)
-            ->orderBy('updated_at', $request->get('order_by', 'DESC'))
-            ->paginate($request->per_page ?? 5);
-
-
-        return new PostResourceCollection($posts);
+        return new VideoCollection($videos);
     }
 }
