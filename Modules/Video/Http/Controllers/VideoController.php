@@ -90,11 +90,12 @@ class VideoController extends Controller
         });
     }
 
-    public function detail(Video $video): JsonResponse
+    public function detail(Video $video): VideoResource
     {
-        return DB::transaction(function () use ($video) {
-            return new VideoResource($video);
-        });
+        $video->views = $video->views + 1;
+        $video->save();
+
+        return new VideoResource($video);
     }
 
     public function list(Request $request): ResourceCollection

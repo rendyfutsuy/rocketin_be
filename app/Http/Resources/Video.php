@@ -22,6 +22,7 @@ class Video extends JsonResource
             'artist' => $this->artists()->pluck('name'),
             'genre' => $this->genres()->pluck('name'),
             'watch_url' => Storage::url($this->watch_url),
+            'detail_url' => route('api.post.detail', $this->id),
             'user_id' => $this->user->username,
             'views' => (int) $this->views,
             'vote' => (int) $this->vote,

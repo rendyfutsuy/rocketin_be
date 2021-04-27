@@ -51,6 +51,7 @@ class User extends Authenticatable implements JWTSubject
         'phone',
         'activation_code',
         'wp_user_id',
+        'is_admin',
     ];
 
     /**
@@ -151,7 +152,7 @@ class User extends Authenticatable implements JWTSubject
     /**  confirm user level as admin */
     public function isAdmin(): bool
     {
-        return $this->level == self::ADMIN || $this->level == self::EDITOR;
+        return $this->is_admin;
     }
 
     /**  confirm user level as anot guest */
