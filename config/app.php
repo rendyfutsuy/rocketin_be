@@ -14,6 +14,7 @@ return [
     */
 
     'name' => env('APP_NAME', 'Laravel'),
+    'version' => 'v0.8',
 
     /*
     |--------------------------------------------------------------------------
@@ -67,7 +68,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Jakarta',
 
     /*
     |--------------------------------------------------------------------------
@@ -80,7 +81,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => env('CURRENT_LOCALE', 'en'),
 
     /*
     |--------------------------------------------------------------------------
@@ -165,6 +166,7 @@ return [
         /*
          * Package Service Providers...
          */
+        Tymon\JWTAuth\Providers\LaravelServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -174,7 +176,18 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
-
+        Modules\Auth\Providers\AuthServiceProvider::class,
+        Modules\Profile\Providers\ProfileServiceProvider::class,
+        Modules\Notification\Providers\NotificationServiceProvider::class,
+        Modules\Wordpress\Providers\WordpressServiceProvider::class,
+        Modules\Post\Providers\PostServiceProvider::class,
+        Tightenco\Ziggy\ZiggyServiceProvider::class,
+        Modules\Media\Providers\MediaServiceProvider::class,
+        Modules\Message\Providers\MessageServiceProvider::class,
+        Modules\Admin\Providers\AdminServiceProvider::class,
+        Modules\AdminPanel\Providers\AdminPanelServiceProvider::class,
+        Modules\ContributorPanel\Providers\ContributorPanelServiceProvider::class,
+        Modules\Video\Providers\VideoServiceProvider::class,
     ],
 
     /*
@@ -201,7 +214,6 @@ return [
         'Config' => Illuminate\Support\Facades\Config::class,
         'Cookie' => Illuminate\Support\Facades\Cookie::class,
         'Crypt' => Illuminate\Support\Facades\Crypt::class,
-        'Date' => Illuminate\Support\Facades\Date::class,
         'DB' => Illuminate\Support\Facades\DB::class,
         'Eloquent' => Illuminate\Database\Eloquent\Model::class,
         'Event' => Illuminate\Support\Facades\Event::class,
@@ -216,7 +228,7 @@ return [
         'Password' => Illuminate\Support\Facades\Password::class,
         'Queue' => Illuminate\Support\Facades\Queue::class,
         'Redirect' => Illuminate\Support\Facades\Redirect::class,
-        // 'Redis' => Illuminate\Support\Facades\Redis::class,
+        'Redis' => Illuminate\Support\Facades\Redis::class,
         'Request' => Illuminate\Support\Facades\Request::class,
         'Response' => Illuminate\Support\Facades\Response::class,
         'Route' => Illuminate\Support\Facades\Route::class,
@@ -229,6 +241,7 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
         'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
         'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
+
     ],
 
 ];

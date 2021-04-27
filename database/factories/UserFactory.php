@@ -2,9 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\User;
-use Illuminate\Database\Eloquent\Factories\Factory;
+use Carbon\Carbon;
+use Database\Factories;
 use Illuminate\Support\Str;
+use Faker\Generator as Faker;
+use Modules\Auth\Models\User;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
 
 class UserFactory extends Factory
 {
@@ -23,25 +27,81 @@ class UserFactory extends Factory
     public function definition()
     {
         return [
-            'name' => $this->faker->name(),
-            'email' => $this->faker->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
-            'remember_token' => Str::random(10),
+            'username' => $this->faker->name,
+            'email' => $this->faker->unique()->safeEmail,
+            'password' => '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', // secret
+            'last_online' => Carbon::now(),
+            'remember_token' => random_str(10),
+            'banned_at' => null,
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * user is still not activated
      *
      * @return \Illuminate\Database\Eloquent\Factories\Factory
      */
-    public function unverified()
+    public function needActivation()
     {
-        return $this->state(function (array $attributes) {
-            return [
-                'email_verified_at' => null,
-            ];
-        });
+        return $this->state([
+            'activation_code' => 123456,
+            'email_verified_at' => null,
+            'last_online' => null,
+            'remember_token' => null,
+        ]);
+    }
+
+    /**
+     * user is activated
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function activated()
+    {
+        return $this->state([
+            'activation_code' => null,
+            'email_verified_at' => Carbon::now(),
+        ]);
+    }
+
+    /**
+     * user became admin
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function admin()
+    {
+        return $this->state([
+            'level' => User::ADMIN,
+            'activation_code' => null,
+            'email_verified_at' => Carbon::now(),
+        ]);
+    }
+
+    /**
+     * user became editor
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function editor()
+    {
+        return $this->state([
+            'level' => User::EDITOR,
+            'activation_code' => null,
+            'email_verified_at' => Carbon::now(),
+        ]);
+    }
+
+
+    /**
+     * user is banned
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    public function banned()
+    {
+        return $this->state([
+            'banned_at' => Carbon::now(),
+        ]);
     }
 }

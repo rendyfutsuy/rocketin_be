@@ -88,6 +88,10 @@ return [
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 
+    'default_email' => env('DEFAULT_EMAIL_ADDRESS', 'kolombaris@konsep.com'),
+
+    'request_attempts_cache' => env('MAIL_REQUEST_ATTEMPT_CACHE', 1440), // default 1 hari
+
     /*
     |--------------------------------------------------------------------------
     | Markdown Mail Settings

@@ -35,7 +35,7 @@ class Kernel extends HttpKernel
             \Illuminate\Session\Middleware\StartSession::class,
             // \Illuminate\Session\Middleware\AuthenticateSession::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \App\Http\Middleware\VerifyCsrfToken::class,
+            // \App\Http\Middleware\VerifyCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
 
@@ -63,6 +63,9 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'jwt.verify' => \App\Http\Middleware\JwtMiddleware::class,
+        'admin' => \Modules\Auth\Http\Middleware\IsAdmin::class,
+        'admin.jwt' => \Modules\Auth\Http\Middleware\Jwt\IsAdmin::class,
         'has.jwt.token' => \App\Http\Middleware\HasJwtToken::class,
+        'post.access.jwt' => \Modules\Post\Http\Middleware\Jwt\Owner::class,        
     ];
 }
